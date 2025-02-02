@@ -38,13 +38,28 @@ contract CoinflipV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     /// @notice Allows the owner to change the seed
     /// @param NewSeed The new seed string
-    function seedRotation(string memory NewSeed) public onlyOwner {
+    function seedRotation(string memory NewSeed, uint rotations) public onlyOwner {
         bytes memory seedBytes = bytes(NewSeed);
-        if (seedBytes.length < 10) {
+        uint seedLength = seedBytes.length;
+
+        if (seedLength < 10) {
             revert SeedTooShort();
         }
-        seed = NewSeed;
-    }
+
+        // Perform the rotations
+        for (uint i = 0; i < rotations; i++) {
+            bytes1 firstChar = seedBytes[0];
+
+            for (uint j = 0; j < seedLength - 1; j++) {
+                seedBytes[j] = seedBytes[j + 1];
+            }
+
+            seedBytes[seedLength - 1] = firstChar;
+        }
+
+        seed = string(seedBytes);
+}
+
 
     /// @notice Generates 10 random flips by hashing characters of the seed
     /// @return A fixed 10-element array of uint8 values (1 or 0)
