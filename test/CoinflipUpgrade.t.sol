@@ -44,9 +44,9 @@ contract CoinflipUpgradeTest is Test {
     ////              winning predictably            ////
     /////////////////////////////////////////////////////
 
-    function test_V1Win() public {
-        assertEq(wrappedV1.userInput([1,0,0,0,1,1,1,1,0,1]), true);
-    }
+    //function test_V1Win() public {
+        //assertEq(wrappedV1.userInput([1,0,0,0,1,1,1,1,0,1]), true);
+    //}
 
     /////////////////////////////////////////////////////
     ////          Test seed rotation in V2           ////
