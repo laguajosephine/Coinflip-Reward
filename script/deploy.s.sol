@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import { Script } from "forge-std/Script";
 import { Coinflip } from "../src/Coinflip.sol";
 import { CoinflipV2 } from "../src/CoinflipV2.sol";
 import { DauphineToken } from "../src/DauphineToken.sol"; // Import your token contract
-import { Script } from "forge-std/Script";
 
 contract Deploy is Script {
     function run() public {
