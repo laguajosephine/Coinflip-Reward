@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.28;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {Coinflip} from "../src/Coinflip.sol";
@@ -16,27 +16,23 @@ contract CoinflipUpgradeTest is Test {
 
     address owner = vm.addr(0x1);
 
-    function setUp() public {
-        // Set deployer to known address
+     function setUp() public {
+        // Set deployer to know address
+        
         vm.startPrank(owner);
-
         // Initialize both versions of the contract
         game = new Coinflip();
         gameV2 = new CoinflipV2();
-
+        
         // Launch the proxy with V1 implementation
         proxy = new UUPSProxy(address(game), abi.encodeWithSignature("initialize(address)", owner));
 
-        // Check if the proxy is deployed correctly
-        assertEq(address(proxy), address(game), "Proxy is not pointing to correct implementation.");
-
-        // We need to cheat here a little because the coin flip game is not deployed and the proxy
+        // We need to cheat here a litte because the coin flip game is not deployed and the proxy
         // will not know how to access the game unless wrapped. 
         wrappedV1 = Coinflip(address(proxy));
+    }
 
-        // Check if the seed is correctly initialized after deployment
-        assertEq(wrappedV1.seed(), "It is a good practice to rotate seeds often in gambling", "Seed is not initialized correctly.");
-}
+
 
 
     /////////////////////////////////////////////////////

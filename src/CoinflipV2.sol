@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Compatible with OpenZeppelin Contracts ^5.0.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -36,29 +36,34 @@ contract CoinflipV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         return true;
     }
 
-    /// @notice Allows the owner to change the seed
+    /// @notice Allows the owner to change the seed and rotate it
     /// @param NewSeed The new seed string
+    /// @param rotations The number of rotations to perform on the seed
     function seedRotation(string memory NewSeed, uint rotations) public onlyOwner {
         bytes memory seedBytes = bytes(NewSeed);
         uint seedLength = seedBytes.length;
 
+    // Ensure the seed length is at least 10 characters
         if (seedLength < 10) {
             revert SeedTooShort();
         }
 
-        // Perform the rotations
+    // Perform the rotations
         for (uint i = 0; i < rotations; i++) {
             bytes1 firstChar = seedBytes[0];
 
+        // Shift all characters to the left by one
             for (uint j = 0; j < seedLength - 1; j++) {
                 seedBytes[j] = seedBytes[j + 1];
             }
 
+        // Move the first character to the last position
             seedBytes[seedLength - 1] = firstChar;
         }
 
+    // Update the seed with the rotated value
         seed = string(seedBytes);
-}
+    }
 
 
     /// @notice Generates 10 random flips by hashing characters of the seed
