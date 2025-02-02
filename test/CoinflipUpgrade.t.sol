@@ -30,11 +30,8 @@ contract CoinflipUpgradeTest is Test {
         // We need to cheat here a litte because the coin flip game is not deployed and the proxy
         // will not know how to access the game unless wrapped. 
         wrappedV1 = Coinflip(address(proxy));
+
     }
-
-
-
-
     /////////////////////////////////////////////////////
     ////      Test if V1 is initialized correctly    ////
     /////////////////////////////////////////////////////

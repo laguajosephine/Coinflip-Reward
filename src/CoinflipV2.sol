@@ -1,33 +1,34 @@
 // SPDX-License-Identifier: MIT
 // Compatible with OpenZeppelin Contracts ^5.0.0
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.22;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 error SeedTooShort();
 
-/// @title Coinflip 10 in a Row (UUPS Upgradable)
-/// @author Tianchan Dong
-/// @notice Contract used as part of the course Solidity and Smart Contract development
 contract CoinflipV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
-    
     string public seed;
 
-    /// @dev Replaces constructor for UUPS upgradability
-    function initialize() public initializer {
-        __Ownable_init(msg.sender);
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address initialOwner) initializer public {
+        __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
-        seed = "It is a good practice to rotate seeds often in gambling";
+        __Ownable_init_unchained(initialOwner);
+        _transferOwnership(initialOwner);
+        seed = "It is a good practice to rotate seeds often in gambling"; // Default seed value
     }
 
     /// @notice Checks user input against contract generated guesses
-    /// @param Guesses A fixed array of 10 elements (1 for heads, 0 for tails)
-    /// @return True if user correctly guesses all flips, false otherwise
-    function userInput(uint8[10] calldata Guesses) external view returns (bool) {
+    /// @param Guesses is a fixed array of 10 elements which holds the user's guesses. The guesses are either 1 or 0 for heads or tails
+    /// @return true if user correctly guesses each flip correctly or false otherwise
+    function userInput(uint8[10] calldata Guesses) external view returns(bool){
         uint8[10] memory generatedFlips = getFlips();
-
         for (uint i = 0; i < 10; i++) {
             if (Guesses[i] != generatedFlips[i]) {
                 return false;
@@ -36,51 +37,60 @@ contract CoinflipV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         return true;
     }
 
-    /// @notice Allows the owner to change the seed and rotate it
-    /// @param NewSeed The new seed string
-    /// @param rotations The number of rotations to perform on the seed
+    /// @notice allows the owner of the contract to change the seed to a new one
+    /// @param NewSeed is a string which represents the new seed
+/// @notice allows the owner of the contract to change the seed to a new one, with rotation
+/// @param NewSeed is a string which represents the new seed
+/// @param rotations is the number of times to rotate the seed string
     function seedRotation(string memory NewSeed, uint rotations) public onlyOwner {
-        bytes memory seedBytes = bytes(NewSeed);
-        uint seedLength = seedBytes.length;
+        bytes memory newSeedBytes = bytes(NewSeed);
+        uint seedLength = newSeedBytes.length;
 
-    // Ensure the seed length is at least 10 characters
-        if (seedLength < 10) {
+        if (seedLength < 10){
             revert SeedTooShort();
         }
 
-    // Perform the rotations
-        for (uint i = 0; i < rotations; i++) {
-            bytes1 firstChar = seedBytes[0];
+    // Normalize the number of rotations in case it's greater than the seed length
+        rotations = rotations % seedLength;
 
-        // Shift all characters to the left by one
-            for (uint j = 0; j < seedLength - 1; j++) {
-                seedBytes[j] = seedBytes[j + 1];
+    // Perform the rotation logic
+        if (rotations > 0) {
+        // Rotating the string
+            bytes memory rotatedSeed = new bytes(seedLength);
+
+        // Copying the rotated parts of the string
+            for (uint i = 0; i < seedLength; i++) {
+                rotatedSeed[i] = newSeedBytes[(i + seedLength - rotations) % seedLength];
             }
 
-        // Move the first character to the last position
-            seedBytes[seedLength - 1] = firstChar;
-        }
-
-    // Update the seed with the rotated value
-        seed = string(seedBytes);
+        // Set the rotated seed
+            seed = string(rotatedSeed);
+        } else {
+        // If no rotations, just set the seed directly
+            seed = NewSeed;
     }
+}
 
 
-    /// @notice Generates 10 random flips by hashing characters of the seed
-    /// @return A fixed 10-element array of uint8 values (1 or 0)
+    /// @notice This function generates 10 random flips by hashing characters of the seed
+    /// @return a fixed 10 element array of type uint8 with only 1 or 0 as its elements
     function getFlips() public view returns (uint8[10] memory) {
         bytes memory seedBytes = bytes(seed);
         uint seedLength = seedBytes.length;
         uint8[10] memory flips;
-
         uint interval = seedLength / 10;
+
         for (uint i = 0; i < 10; i++) {
-            uint randomNum = uint(keccak256(abi.encode(seedBytes[i * interval], block.timestamp)));
-            flips[i] = (randomNum % 2 == 0) ? 1 : 0;
+            uint randomNum = uint(keccak256(abi.encode(seedBytes[i * interval])));
+            flips[i] = uint8(randomNum % 2); // Even -> 0, Odd -> 1
         }
+
         return flips;
     }
 
-    /// @dev Required for UUPS upgradability, restricts upgrades to the owner
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        onlyOwner
+        override
+    {}
 }
